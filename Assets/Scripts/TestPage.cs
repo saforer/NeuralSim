@@ -27,16 +27,17 @@ public class GridManager : FContainer
     List<Bug> bugs = new List<Bug>();
     List<Plant> plants = new List<Plant>();
     List<object> toRemove = new List<object>();
-    int width = 42;
+    int width = 38;
     int height = 38;
     public GridManager()
     {
         FillGrid();
-        for (int i = 0; i < 30; i++)
+        for (int i = 0; i < 40; i++)
         {
             makeBug();
         }
-        
+
+        makePlayer();
     }
 
     public Vector2 g2w (int gridX, int gridY)

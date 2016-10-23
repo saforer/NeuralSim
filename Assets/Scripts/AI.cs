@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-class AI
+public class AI
 {
     public Bug parent;
     public float moveCount = 0f;
@@ -19,7 +19,7 @@ class AI
     public virtual void move() { }
 }
 
-class RandomAI : AI
+/*public class RandomAI : AI
 {
     override
     public void move()
@@ -43,9 +43,9 @@ class RandomAI : AI
                 break;
         }
     }
-}
+}*/
 
-class Player : AI
+public class Player : AI
 {
     override
     public void Update(float dt)

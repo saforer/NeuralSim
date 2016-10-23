@@ -4,16 +4,16 @@ public class Bug : FSprite
 {
     AI ai;
     GridManager gm;
-    int tileInFront = 0;
+    public int tileInFront = 0;
     public Facing facing;
     public int gridX;
     public int gridY;
-    public int energy = 50;
+    public int energy = 20;
     
 
     public Bug (GridManager gm) : base("bug")
     {
-        ai = new RandomAI();
+        ai = new NeuralAI();
         ai.parent = this;
         this.gm = gm;
         this.facing = Facing.R;
@@ -23,7 +23,7 @@ public class Bug : FSprite
 
     public Bug (Facing facing, int x, int y, GridManager gm) : base("bug")
     {
-        ai = new RandomAI();
+        ai = new NeuralAI();
         ai.parent = this;
         this.gm = gm;
         this.facing = facing;
@@ -152,14 +152,14 @@ public class Bug : FSprite
     {
         facing = leftFace(facing);
         this.rotation -= 60f;
-        energy--;
+        energy-=2;
     }
 
     public void rotateRight()
     {
         facing = rightFace(facing);
         this.rotation += 60f;
-        energy--;
+        energy-=2;
     }
     
     public void moveForward()
@@ -176,9 +176,14 @@ public class Bug : FSprite
                 gridX = gridXTo;
                 gridY = gridYTo;
                 updatePosition();
-                energy--;
+                energy -= 2;
             }
         }
+    }
+
+    public void doNothing()
+    {
+        energy--;
     }
 
     public void birth()
@@ -210,7 +215,7 @@ public class Bug : FSprite
         if (gm.isPlantAt(gridX, gridY))
         {
             gm.remove(gm.getPlantAt(gridX, gridY));
-            energy += 50;
+            energy += 100;
         }
     }
 }
