@@ -24,27 +24,23 @@ class RandomAI : AI
     override
     public void move()
     {
-        if (moveCount >= .20f)
+        int toDo = Random.Range(0, 5);
+        switch (toDo)
         {
-            moveCount = 0f;
-            int toDo = Random.Range(0, 5);
-            switch (toDo)
-            {
-                case 0:
-                    parent.moveForward();
-                    break;
-                case 1:
-                    parent.rotateLeft();
-                    break;
-                case 2:
-                    parent.rotateRight();
-                    break;
-                case 3:
-                    parent.birth();
-                    break;
-                default:
-                    break;
-            }
+            case 0:
+                parent.moveForward();
+                break;
+            case 1:
+                parent.rotateLeft();
+                break;
+            case 2:
+                parent.rotateRight();
+                break;
+            case 3:
+                parent.birth();
+                break;
+            default:
+                break;
         }
     }
 }
