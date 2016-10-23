@@ -32,10 +32,11 @@ public class GridManager : FContainer
     public GridManager()
     {
         FillGrid();
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < 30; i++)
         {
             makeBug();
         }
+        
     }
 
     public Vector2 g2w (int gridX, int gridY)
@@ -58,6 +59,25 @@ public class GridManager : FContainer
         return new Vector2(x, y);
     }
 
+    void makePlayer()
+    {
+        Boolean bugPlaced = false;
+        while (!bugPlaced)
+        {
+            int x = UnityEngine.Random.Range(0, width);
+            int y = UnityEngine.Random.Range(0, height);
+            if (!isBugAt(x, y))
+            {
+                Bug b = new Bug(Facing.R, x, y, this);
+                b.makePlayer();
+                b.SetPosition(g2w(b.gridX, b.gridY));
+                bugs.Add(b);
+                AddChild(b);
+                bugPlaced = true;
+            }
+        }
+    }
+
     void makeBug()
     {
         Boolean bugPlaced = false;
@@ -72,11 +92,17 @@ public class GridManager : FContainer
             }
         }
     }
-    void makeBug(int x, int y)
+
+    public void makeBug(int x, int y)
+    {
+        makeBug(Facing.R, x, y);
+    }
+
+    public void makeBug(Facing fac, int x, int y)
     {
         if (!isBugAt(x, y))
         {
-            Bug b = new Bug(Facing.R, x, y, this);
+            Bug b = new Bug(fac, x, y, this);
             b.SetPosition(g2w(b.gridX, b.gridY));
             bugs.Add(b);
             AddChild(b);
@@ -144,7 +170,7 @@ public class GridManager : FContainer
         if ((y < 0) || (y > height-1)) return false;
         return true;
     }
-
+    
     public Boolean isBugAt(int x, int y)
     {
         foreach (Bug b in bugs) {
@@ -173,19 +199,18 @@ public class GridManager : FContainer
 
     public void Update(float dt)
     {
-        foreach (Bug b in bugs)
-        {
-            b.Update(dt);
-        }
 
-        /*
-        if (bugs.Count < 10)
+        for (int i = bugs.Count-1; i>=0;i--)
+        {
+            bugs[i].Update(dt);
+        }
+        
+        /*if (bugs.Count < 10)
         {
             makeBug();
-        }
-        */
+        }*/
 
-        if (plants.Count < 100)
+        while (plants.Count < 100)
         {
             makePlant();
         }

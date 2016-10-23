@@ -4,15 +4,16 @@ public class Bug : FSprite
 {
     AI ai;
     GridManager gm;
+    int tileInFront = 0;
     public Facing facing;
     public int gridX;
     public int gridY;
-    public int energy = 10;
+    public int energy = 50;
     
 
     public Bug (GridManager gm) : base("bug")
     {
-        ai = new AI();
+        ai = new RandomAI();
         ai.parent = this;
         this.gm = gm;
         this.facing = Facing.R;
@@ -22,7 +23,7 @@ public class Bug : FSprite
 
     public Bug (Facing facing, int x, int y, GridManager gm) : base("bug")
     {
-        ai = new AI();
+        ai = new RandomAI();
         ai.parent = this;
         this.gm = gm;
         this.facing = facing;
@@ -35,38 +36,136 @@ public class Bug : FSprite
         ai = new Player();
         ai.parent = this;
     }
-
-    public void moveForward()
+    
+    public void updatePosition()
     {
-        int gridXTo = gridX;
-        int gridYTo = gridY;
-        switch (facing)
+        this.SetPosition(gm.g2w(gridX, gridY));
+    }
+
+    public int getTileXFromFacing(Facing direction)
+    {
+        int facingX = gridX;
+        int facingY = gridY;
+        switch (direction)
         {
             case Facing.R:
-                gridXTo++;
+                facingX++;
                 break;
             case Facing.L:
-                gridXTo--;
+                facingX--;
                 break;
             case Facing.UR:
-                gridXTo += (y % 2 == 0) ? 0 : 1;
-                gridYTo++;
+                facingX += (y % 2 == 0) ? 0 : 1;
                 break;
             case Facing.DR:
-                gridXTo += (y % 2 == 0) ? 0 : 1;
-                gridYTo--;
+                facingX += (y % 2 == 0) ? 0 : 1;
                 break;
             case Facing.UL:
-                gridXTo -= (y % 2 == 0) ? 1 : 0;
-                gridYTo++;
+                facingX -= (y % 2 == 0) ? 1 : 0;
                 break;
             case Facing.DL:
-                gridXTo -= (y % 2 == 0) ? 1 : 0;
-                gridYTo--;
+                facingX -= (y % 2 == 0) ? 1 : 0;
                 break;
             default:
                 break;
         }
+
+        return facingX;
+    }
+
+    public int getTileYFromFacing(Facing direction)
+    {
+        int facingX = gridX;
+        int facingY = gridY;
+        switch (direction)
+        {
+            case Facing.R:
+                break;
+            case Facing.L:
+                break;
+            case Facing.UR:
+                facingY++;
+                break;
+            case Facing.DR:
+                facingY--;
+                break;
+            case Facing.UL:
+                facingY++;
+                break;
+            case Facing.DL:
+                facingY--;
+                break;
+            default:
+                break;
+        }
+
+        return facingY;
+    }
+
+    public void see()
+    {
+        tileInFront = 0;
+        int tileFrontX = getTileXFromFacing(facing);
+        int tileFrontY = getTileYFromFacing(facing);
+
+        if (!gm.canMove(tileFrontX, tileFrontY))
+        {
+            tileInFront = 1; //I SEE the an unwalkable tile
+        }   else if (gm.isBugAt(tileFrontX, tileFrontY))
+        {
+            tileInFront = 2; //I SEE A BUG
+        }   else if (gm.isPlantAt(tileFrontX, tileFrontY)) 
+        {
+            tileInFront = 3; //I SEE TASTY FOOD
+        }
+    }
+
+    public Facing leftFace(Facing d)
+    {
+        if (d == Facing.DR)
+        {
+            d = Facing.R;
+        }
+        else
+        {
+            d += 1;
+        }
+
+        return d;
+    }
+
+    public Facing rightFace(Facing d)
+    {
+        if (d == Facing.R)
+        {
+            d = Facing.DR;
+        }
+        else
+        {
+            d -= 1;
+        }
+
+        return d;
+    }
+
+    public void rotateLeft()
+    {
+        facing = leftFace(facing);
+        this.rotation -= 60f;
+        energy--;
+    }
+
+    public void rotateRight()
+    {
+        facing = rightFace(facing);
+        this.rotation += 60f;
+        energy--;
+    }
+    
+    public void moveForward()
+    {
+        int gridXTo = getTileXFromFacing(facing);
+        int gridYTo = getTileYFromFacing(facing);
 
         //is the tile in the grid?
         if (gm.canMove(gridXTo, gridYTo))
@@ -82,45 +181,31 @@ public class Bug : FSprite
         }
     }
 
-    public void updatePosition()
+    public void birth()
     {
-        this.SetPosition(gm.g2w(gridX, gridY));
-    }
+        Facing behind = facing;
 
-    public void rotateLeft()
-    {
-        
-        if (facing == Facing.DR)
-        {
-            facing = Facing.R;
-        } else
-        {
-            facing += 1;
-        }
-        this.rotation -= 60f;
-        energy--;
-    }
+        behind = rightFace(behind);
+        behind = rightFace(behind);
+        behind = rightFace(behind);
 
-    public void rotateRight()
-    {
-        if (facing == Facing.R)
+        int behindX = getTileXFromFacing(behind);
+        int behindY = getTileYFromFacing(behind);
+        if ((energy > 50) && (gm.canMove(behindX, behindY)) && (!gm.isBugAt(behindX, behindY)))
         {
-            facing = Facing.DR;
+            energy -= 50;
+            gm.makeBug(behindX, behindY);
         }
-        else
-        {
-            facing -= 1;
-        }
-        this.rotation += 60f;
-        energy--;
     }
 
     public void Update(float dt)
     {
+        
         if (energy <= 0)
         {
             gm.remove(this);
         }
+        see();
         ai.Update(dt);
         if (gm.isPlantAt(gridX, gridY))
         {

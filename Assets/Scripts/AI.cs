@@ -3,13 +3,31 @@
 class AI
 {
     public Bug parent;
-    float moveCount = 0f;
+    public float moveCount = 0f;
     public virtual void Update(float dt)
     {
         if (moveCount >= .20f)
         {
+            move();
             moveCount = 0f;
-            int toDo = Random.Range(0, 4);
+        } else
+        {
+            moveCount += dt;
+        }
+    }
+
+    public virtual void move() { }
+}
+
+class RandomAI : AI
+{
+    override
+    public void move()
+    {
+        if (moveCount >= .20f)
+        {
+            moveCount = 0f;
+            int toDo = Random.Range(0, 5);
             switch (toDo)
             {
                 case 0:
@@ -22,12 +40,11 @@ class AI
                     parent.rotateRight();
                     break;
                 case 3:
+                    parent.birth();
+                    break;
                 default:
                     break;
             }
-        } else
-        {
-            moveCount += dt;
         }
     }
 }
@@ -49,6 +66,10 @@ class Player : AI
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
             parent.moveForward();
+        }
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            parent.birth();
         }
     }
 }
