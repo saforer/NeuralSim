@@ -9,7 +9,7 @@ class AI
         if (moveCount >= .20f)
         {
             moveCount = 0f;
-            int toDo = Random.Range(0, 3);
+            int toDo = Random.Range(0, 4);
             switch (toDo)
             {
                 case 0:
@@ -21,6 +21,7 @@ class AI
                 case 2:
                     parent.rotateRight();
                     break;
+                case 3:
                 default:
                     break;
             }

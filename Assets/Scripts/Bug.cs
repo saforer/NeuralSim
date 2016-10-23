@@ -7,6 +7,7 @@ public class Bug : FSprite
     public Facing facing;
     public int gridX;
     public int gridY;
+    public int energy = 10;
     
 
     public Bug (GridManager gm) : base("bug")
@@ -76,13 +77,14 @@ public class Bug : FSprite
                 gridX = gridXTo;
                 gridY = gridYTo;
                 updatePosition();
+                energy--;
             }
         }
     }
 
     public void updatePosition()
     {
-        this.SetPosition(gm.g2w(this));
+        this.SetPosition(gm.g2w(gridX, gridY));
     }
 
     public void rotateLeft()
@@ -96,6 +98,7 @@ public class Bug : FSprite
             facing += 1;
         }
         this.rotation -= 60f;
+        energy--;
     }
 
     public void rotateRight()
@@ -109,11 +112,21 @@ public class Bug : FSprite
             facing -= 1;
         }
         this.rotation += 60f;
+        energy--;
     }
 
     public void Update(float dt)
     {
+        if (energy <= 0)
+        {
+            gm.remove(this);
+        }
         ai.Update(dt);
+        if (gm.isPlantAt(gridX, gridY))
+        {
+            gm.remove(gm.getPlantAt(gridX, gridY));
+            energy += 50;
+        }
     }
 }
 
