@@ -27,17 +27,17 @@ public class GridManager : FContainer
     List<Bug> bugs = new List<Bug>();
     List<Plant> plants = new List<Plant>();
     List<object> toRemove = new List<object>();
-    int width = 38;
+    int width = 42;
     int height = 38;
     public GridManager()
     {
         FillGrid();
-        for (int i = 0; i < 40; i++)
+        for (int i = 0; i < 100; i++)
         {
             makeBug();
         }
 
-        makePlayer();
+        //makePlayer();
     }
 
     public Vector2 g2w (int gridX, int gridY)
@@ -86,9 +86,10 @@ public class GridManager : FContainer
         {
             int x = UnityEngine.Random.Range(0, width);
             int y = UnityEngine.Random.Range(0, height);
+            int fac = UnityEngine.Random.Range(0, 6);
             if (!isBugAt(x, y))
             {
-                makeBug(x, y);
+                makeBug((Facing)fac, x, y);
                 bugPlaced = true;
             }
         }
@@ -96,7 +97,12 @@ public class GridManager : FContainer
 
     public void makeBug(int x, int y)
     {
-        makeBug(Facing.R, x, y);
+        makeBug((Facing)UnityEngine.Random.Range(0, 6), x, y);
+    }
+
+    public void makeBug(int x, int y, NeuralAI ai)
+    {
+        makeBug((Facing)UnityEngine.Random.Range(0, 6), x, y, ai);
     }
 
     public void makeBug(Facing fac, int x, int y)
@@ -104,6 +110,17 @@ public class GridManager : FContainer
         if (!isBugAt(x, y))
         {
             Bug b = new Bug(fac, x, y, this);
+            b.SetPosition(g2w(b.gridX, b.gridY));
+            bugs.Add(b);
+            AddChild(b);
+        }
+    }
+
+    public void makeBug(Facing fac, int x, int y, NeuralAI ai)
+    {
+        if (!isBugAt(x, y))
+        {
+            Bug b = new Bug(fac, x, y, this, ai);
             b.SetPosition(g2w(b.gridX, b.gridY));
             bugs.Add(b);
             AddChild(b);
@@ -198,6 +215,15 @@ public class GridManager : FContainer
         return new Plant(0,0);
     }
 
+    public Bug getBugAt(int x, int y)
+    {
+        foreach (Bug b in bugs)
+        {
+            if ((b.gridX == x) && (b.gridY == y)) return b;
+        }
+        return new Bug(this);
+    }
+
     public void Update(float dt)
     {
 
@@ -205,13 +231,41 @@ public class GridManager : FContainer
         {
             bugs[i].Update(dt);
         }
-        
-        /*if (bugs.Count < 10)
+
+        if (Input.GetKeyDown(KeyCode.N))
+        {
+            foreach (Bug b in bugs)
+            {
+                toRemove.Add(b);
+            }
+
+            foreach (object o in toRemove)
+            {
+                if (o is Bug)
+                {
+                    bugs.Remove((Bug)o);
+                    RemoveChild((Bug)o);
+                }
+            }
+        }
+
+        if (bugs.Count == 0)
+        {
+            Debug.Log("ALL BUGS DEAD Trying again!");
+            while (bugs.Count < 100)
+            {
+                makeBug();
+            }
+        }
+
+
+        /*while (bugs.Count < 10)
         {
             makeBug();
         }*/
 
-        while (plants.Count < 100)
+
+        while (plants.Count < 200)
         {
             makePlant();
         }

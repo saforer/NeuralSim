@@ -2,13 +2,21 @@
 
 public class Bug : FSprite
 {
-    AI ai;
+    public AI ai;
     GridManager gm;
     public int tileInFront = 0;
+    public int tileToLeft = 0;
+    public int tileToRight = 0;
+    public Bug bugInFront;
+    public Bug bugToLeft;
+    public Bug bugToRight;
     public Facing facing;
     public int gridX;
     public int gridY;
-    public int energy = 20;
+    public int energy = 50;
+    public int maximumStomach = 200;
+    public int age = 0;
+    public int iff = 0;
     
 
     public Bug (GridManager gm) : base("bug")
@@ -16,9 +24,12 @@ public class Bug : FSprite
         ai = new NeuralAI();
         ai.parent = this;
         this.gm = gm;
-        this.facing = Facing.R;
+
+        this.facing = (Facing)Random.Range(0, 6);
+        iff = Random.Range(0, 1000);
         gridX = 0;
         gridY = 0;
+        updateRotation();
     }
 
     public Bug (Facing facing, int x, int y, GridManager gm) : base("bug")
@@ -29,6 +40,18 @@ public class Bug : FSprite
         this.facing = facing;
         gridX = x;
         gridY = y;
+        updateRotation();
+    }
+
+    public Bug(Facing facing, int x, int y, GridManager gm, NeuralAI ai) : base("bug")
+    {
+        this.ai = new NeuralAI(ai.nodeList, ai.connectList);
+        this.ai.parent = this;
+        this.gm = gm;
+        this.facing = facing;
+        gridX = x;
+        gridY = y;
+        updateRotation();
     }
 
     public void makePlayer()
@@ -40,6 +63,31 @@ public class Bug : FSprite
     public void updatePosition()
     {
         this.SetPosition(gm.g2w(gridX, gridY));
+    }
+
+    void updateRotation()
+    {
+        switch (facing)
+        {
+            case Facing.UL:
+                rotation = 240f;
+                break;
+            case Facing.UR:
+                rotation = 300f;
+                break;
+            case Facing.L:
+                rotation = 180f;
+                break;
+            case Facing.R:
+                rotation = 0f;
+                break;
+            case Facing.DL:
+                rotation = 120f;
+                break;
+            case Facing.DR:
+                rotation = 60f;
+                break;
+        }
     }
 
     public int getTileXFromFacing(Facing direction)
@@ -104,20 +152,38 @@ public class Bug : FSprite
 
     public void see()
     {
-        tileInFront = 0;
         int tileFrontX = getTileXFromFacing(facing);
         int tileFrontY = getTileYFromFacing(facing);
+        int tileLeftX = getTileXFromFacing(leftFace(facing));
+        int tileLeftY = getTileYFromFacing(leftFace(facing));
+        int tileRightX = getTileXFromFacing(rightFace(facing));
+        int tileRightY = getTileYFromFacing(rightFace(facing));
 
-        if (!gm.canMove(tileFrontX, tileFrontY))
+
+        tileInFront = visionReturn(tileFrontX, tileFrontY);
+        tileToLeft = visionReturn(tileLeftX, tileLeftY);
+        tileToRight = visionReturn(tileRightX, tileRightY);
+        if (tileInFront == 2) bugInFront = gm.getBugAt(tileFrontX, tileFrontY);
+    }
+
+
+    int visionReturn (int x, int y)
+    {
+        int o = 0;
+        if (!gm.canMove(x, y))
         {
-            tileInFront = 1; //I SEE the an unwalkable tile
-        }   else if (gm.isBugAt(tileFrontX, tileFrontY))
-        {
-            tileInFront = 2; //I SEE A BUG
-        }   else if (gm.isPlantAt(tileFrontX, tileFrontY)) 
-        {
-            tileInFront = 3; //I SEE TASTY FOOD
+            o = 1; //I SEE the an unwalkable tile
         }
+        else if (gm.isBugAt(x, y))
+        {
+            o = 2; //I SEE A BUG
+        }
+        else if (gm.isPlantAt(x, y))
+        {
+            o = 3; //I SEE TASTY FOOD
+        }
+
+        return o;
     }
 
     public Facing leftFace(Facing d)
@@ -176,8 +242,14 @@ public class Bug : FSprite
                 gridX = gridXTo;
                 gridY = gridYTo;
                 updatePosition();
-                energy -= 2;
+                energy -= 2; //Walking forward is good
+            } else
+            {
+                energy -= 5; //Don't walk into other bugs
             }
+        } else
+        {
+            energy -= 10; //REALLY don't walk into walls
         }
     }
 
@@ -196,10 +268,13 @@ public class Bug : FSprite
 
         int behindX = getTileXFromFacing(behind);
         int behindY = getTileYFromFacing(behind);
-        if ((energy > 50) && (gm.canMove(behindX, behindY)) && (!gm.isBugAt(behindX, behindY)))
+        if ((energy > 100) && (gm.canMove(behindX, behindY)) && (!gm.isBugAt(behindX, behindY)))
         {
             energy -= 50;
-            gm.makeBug(behindX, behindY);
+            gm.makeBug(behindX, behindY, (NeuralAI)ai);
+        } else
+        {
+            doNothing();
         }
     }
 
@@ -210,12 +285,17 @@ public class Bug : FSprite
         {
             gm.remove(this);
         }
+        if (energy > 200)
+        {
+            energy = 200;
+        }
+
         see();
         ai.Update(dt);
         if (gm.isPlantAt(gridX, gridY))
         {
             gm.remove(gm.getPlantAt(gridX, gridY));
-            energy += 100;
+            energy += 50;
         }
     }
 }

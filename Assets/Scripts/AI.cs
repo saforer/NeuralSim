@@ -6,7 +6,7 @@ public class AI
     public float moveCount = 0f;
     public virtual void Update(float dt)
     {
-        if (moveCount >= .20f)
+        if (moveCount >= .10f)
         {
             move();
             moveCount = 0f;

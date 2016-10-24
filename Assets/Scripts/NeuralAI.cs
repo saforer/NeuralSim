@@ -1,12 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 //Inputs from Bug
 //---------------
+//age
 //isFoodInfront
 //isBugInfront
 //isWallInfront
+//isFoodLeft
+//isBugLeft
+//isWallLeft
+//isFoodRight
+//isBugRight
+//isWallRight
 //EnergyCount
+//isBirthAble
 //Bias
 
 //Outputs to bug
@@ -23,8 +32,8 @@ using System.Linq;
 
 public class NeuralAI : AI
 {
-    List<Node> nodeList;
-    List<Connect> connectList;
+    public List<Node> nodeList;
+    public List<Connect> connectList;
 
     //NEW NEURAL AI! Gotta make sure it has the proper inputs
     public NeuralAI()
@@ -32,10 +41,20 @@ public class NeuralAI : AI
         nodeList = new List<Node>();
         connectList = new List<Connect>();
         //Inputs
+        nodeList.Add(new Node(NodeType.Sensor, "age"));
         nodeList.Add(new Node(NodeType.Sensor, "isFoodInfront"));
         nodeList.Add(new Node(NodeType.Sensor, "isBugInfront"));
         nodeList.Add(new Node(NodeType.Sensor, "isWallInfront"));
-        nodeList.Add(new Node(NodeType.Sensor, "EnergyCount"));
+        nodeList.Add(new Node(NodeType.Sensor, "isFoodLeft"));
+        nodeList.Add(new Node(NodeType.Sensor, "isBugLeft"));
+        nodeList.Add(new Node(NodeType.Sensor, "isWallLeft"));
+        nodeList.Add(new Node(NodeType.Sensor, "isFoodRight"));
+        nodeList.Add(new Node(NodeType.Sensor, "isBugRight"));
+        nodeList.Add(new Node(NodeType.Sensor, "isWallRight"));
+        //nodeList.Add(new Node(NodeType.Sensor, "EnergyCount"));
+        nodeList.Add(new Node(NodeType.Sensor, "percentFull"));
+        nodeList.Add(new Node(NodeType.Sensor, "isBirthAble"));
+        nodeList.Add(new Node(NodeType.Sensor, "iffSame"));
         nodeList.Add(new Node(NodeType.Sensor, "Bias"));
 
         //Outputs
@@ -56,15 +75,59 @@ public class NeuralAI : AI
                 }
             }
         }
+
+        mutate();
+    }
+
+    public NeuralAI(List<Node> nL, List<Connect> cL)
+    {
+        this.nodeList = nL;
+        this.connectList = cL;
+
+        mutate();
+    }
+
+    void mutate()
+    {
+        foreach (Connect c in connectList)
+        {
+            if (rand() < 1)
+            {
+                c.weight += UnityEngine.Random.Range(-1.0f, 1.0f);
+                c.weight = c.fakeSigmoid(c.weight);
+            }
+        }
+
+        if (rand() < 1)
+        {
+            newNode();
+        }
+    }
+
+    void newNode()
+    {
+        Node n = new Node(NodeType.Hidden);
+        nodeList.Add(n);
+
+        int connectionToMessUp = UnityEngine.Random.Range(0, connectList.Count - 1);
+        Connect messThisUp = connectList[connectionToMessUp];
+        messThisUp.enabled = false;
+
+        Connect newConnect1 = new Connect(messThisUp.from, n, UnityEngine.Random.Range(0f, 1f));
+        Connect newConnect2 = new Connect(n, messThisUp.to, UnityEngine.Random.Range(0f, 1f));
+        UnityEngine.Debug.Log("MUTATION ADDED");
+    }
+
+    int rand()
+    {
+        return UnityEngine.Random.Range(0, 1000);
     }
     
     override
     public void move()
     {
+        parent.age++;
         nodesUpdate();
-
-        
-
     }
 
     void nodesUpdate()
@@ -130,37 +193,45 @@ public class NeuralAI : AI
     void inputUpdate()
     {
         parent.see();
+        setSight(parent.tileInFront, "isFoodInFront", "isBugInFront", "isWallInFront");
+        setSight(parent.tileInFront, "isFoodLeft", "isBugLeft", "isWallLeft");
+        setSight(parent.tileInFront, "isFoodRight", "isBugRight", "isWallRight");
+        setNodeValue("isBirthAble", ((parent.energy >= 100) ? 100: 0));
+        setNodeValue("percentFull", (parent.energy / 200));
+        setNodeValue("age", parent.age);
+        //setNodeValue("EnergyCount", UnityEngine.Mathf.FloorToInt(parent.energy));
+        setNodeValue("Bias", 1.0f);
+    }
+
+    void setSight(int i, string food, string bug, string wall)
+    {
         switch (parent.tileInFront)
         {
             case 0:
                 //NORMAL
-                setNodeValue("isFoodInfront", 0.0f);
-                setNodeValue("isBugInfront", 0.0f);
-                setNodeValue("isWallInfront", 0.0f);
+                setNodeValue(food, 0.0f);
+                setNodeValue(bug, 0.0f);
+                setNodeValue(wall, 0.0f);
                 break;
             case 1:
                 //WALL
-                setNodeValue("isFoodInfront", 0.0f);
-                setNodeValue("isBugInfront", 0.0f);
-                setNodeValue("isWallInfront", 1.0f);
+                setNodeValue(food, 0.0f);
+                setNodeValue(bug, 0.0f);
+                setNodeValue(wall, 100.0f);
                 break;
             case 2:
                 //BUG
-                setNodeValue("isFoodInfront", 0.0f);
-                setNodeValue("isBugInfront", 1.0f);
-                setNodeValue("isWallInfront", 0.0f);
+                setNodeValue(food, 0.0f);
+                setNodeValue(bug, 100.0f);
+                setNodeValue(wall, 0.0f);
                 break;
             case 3:
                 //FOOD
-                setNodeValue("isFoodInfront", 1.0f);
-                setNodeValue("isBugInfront", 0.0f);
-                setNodeValue("isWallInfront", 0.0f);
+                setNodeValue(food, 100.0f);
+                setNodeValue(bug, 0.0f);
+                setNodeValue(wall, 0.0f);
                 break;
         }
-
-        setNodeValue("EnergyCount", UnityEngine.Mathf.FloorToInt(parent.energy));
-        setNodeValue("Bias", 1.0f);
-
     }
 
     public void outputUpdate()
@@ -175,6 +246,7 @@ public class NeuralAI : AI
         }
 
         List<Node> sorted = outputNodes.OrderBy(n => n.value).ToList();
+
 
         switch (sorted[sorted.Count-1].name)
         {
@@ -225,6 +297,12 @@ public class Node
     public string name;
     public float value;
     public bool updated = false;
+
+    public Node (NodeType type)
+    {
+        this.type = type;
+        this.name = "Hidden";
+    }
 
     public Node (NodeType type, string name)
     {
@@ -300,7 +378,7 @@ public class Connect
         enabled = true;
     }
 
-    float fakeSigmoid(float i)
+    public float fakeSigmoid(float i)
     {
         if (i > 1.0f)
         {
